@@ -17,6 +17,8 @@ app.get('/:targetDeviceToken', async (req, res) => {
 
   console.log(`Received request for device token: ${targetDeviceToken}`);
 
+  console.log("RAW ENV VALUE:", process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+
  
 });
 
