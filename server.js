@@ -1,13 +1,13 @@
 const express = require('express');
 const admin = require('firebase-admin');
-const fs = require('fs');
 
-// Write the service account JSON from an env var to a temporary file
-const serviceAccountPath = './firebase-credentials.json';
-fs.writeFileSync(serviceAccountPath, process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
-
-// Initialize Firebase Admin with the temp credentials file
-const serviceAccount = require(serviceAccountPath);
+let serviceAccount;
+try {
+  serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+} catch (error) {
+  console.error('Error parsing FIREBASE_SERVICE_ACCOUNT_JSON:', error);
+  process.exit(1);
+}
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
@@ -22,6 +22,8 @@ app.get('/:targetDeviceToken', async (req, res) => {
   if (!targetDeviceToken) {
     return res.status(400).json({ error: 'Device token is missing in the URL.' });
   }
+
+  console.log(`Received request for device token: ${targetDeviceToken}`);
 
   const message = {
     notification: {
@@ -47,4 +49,5 @@ app.get('/:targetDeviceToken', async (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Express server listening on port ${PORT}`);
+  console.log(`Access it at http://localhost:${PORT}/{yourDeviceToken}`);
 });
