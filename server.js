@@ -1,27 +1,21 @@
 const express = require('express');
 const admin = require('firebase-admin');
-const fs = require('fs');
 
-// Write the service account JSON from an env var to a temporary file
-const serviceAccountPath = './firebase-credentials.json';
+const jsonString = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
 
-try {
-  const jsonString = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
-
-  // Parse to make sure it's valid JSON, then write it nicely formatted
-  const parsed = JSON.parse(jsonString);
-  fs.writeFileSync(serviceAccountPath, JSON.stringify(parsed, null, 2));
-
-  console.log('✅ Service account written to temp file.');
-} catch (error) {
-  console.error('❌ Failed to parse/write FIREBASE_SERVICE_ACCOUNT_JSON:', error.message);
+if (!jsonString) {
+  console.error('FIREBASE_SERVICE_ACCOUNT_JSON env var is not set.');
   process.exit(1);
 }
 
-// Load the service account from the temp file
-const serviceAccount = require(serviceAccountPath);
+let serviceAccount;
+try {
+  serviceAccount = JSON.parse(jsonString);
+} catch (error) {
+  console.error('Failed to parse FIREBASE_SERVICE_ACCOUNT_JSON:', error.message);
+  process.exit(1);
+}
 
-// Initialize Firebase Admin with the temp credentials file
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
 });
@@ -50,14 +44,14 @@ app.get('/:targetDeviceToken', async (req, res) => {
 
   try {
     const response = await admin.messaging().send(message);
-    console.log('✅ Successfully sent message:', response);
+    console.log('Successfully sent message:', response);
     res.status(200).json({ success: true, messageId: response, description: 'FCM message sent successfully.' });
   } catch (error) {
-    console.error('❌ Error sending message:', error);
+    console.error('Error sending message:', error);
     res.status(500).json({ success: false, error: 'Failed to send FCM message.', details: error.message });
   }
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 Express server listening on port ${PORT}`);
+  console.log(`Express server listening on port ${PORT}`);
 });
