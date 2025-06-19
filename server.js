@@ -1,22 +1,30 @@
 const express = require('express');
 const admin = require('firebase-admin');
+const fs = require('fs');
 
-let serviceAccount;
+// Write the service account JSON from an env var to a temporary file
+const serviceAccountPath = './firebase-credentials.json';
 
 try {
-  const envVar = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+  const jsonString = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
 
-  // Double parse: some systems wrap JSON strings in quotes
-  const firstParse = JSON.parse(envVar); // this removes outer quotes and backslashes if present
+  // Parse to make sure it's valid JSON, then write it nicely formatted
+  const parsed = JSON.parse(jsonString);
+  fs.writeFileSync(serviceAccountPath, JSON.stringify(parsed, null, 2));
 
-  // If firstParse is already an object, keep it. Otherwise, parse again.
-  serviceAccount = typeof firstParse === 'string' ? JSON.parse(firstParse) : firstParse;
-
-  console.log("✅ Firebase service account parsed successfully.");
+  console.log('✅ Service account written to temp file.');
 } catch (error) {
-  console.error('❌ Error parsing FIREBASE_SERVICE_ACCOUNT_JSON:', error.message);
+  console.error('❌ Failed to parse/write FIREBASE_SERVICE_ACCOUNT_JSON:', error.message);
   process.exit(1);
 }
+
+// Load the service account from the temp file
+const serviceAccount = require(serviceAccountPath);
+
+// Initialize Firebase Admin with the temp credentials file
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
 
 const app = express();
 const PORT = 4000;
@@ -27,8 +35,6 @@ app.get('/:targetDeviceToken', async (req, res) => {
   if (!targetDeviceToken) {
     return res.status(400).json({ error: 'Device token is missing in the URL.' });
   }
-
-  console.log(`Received request for device token: ${targetDeviceToken}`);
 
   const message = {
     notification: {
@@ -44,26 +50,14 @@ app.get('/:targetDeviceToken', async (req, res) => {
 
   try {
     const response = await admin.messaging().send(message);
-    console.log('Successfully sent message:', response);
-    res.status(200).json({
-      success: true,
-      messageId: response,
-      description: 'FCM message sent successfully.',
-    });
+    console.log('✅ Successfully sent message:', response);
+    res.status(200).json({ success: true, messageId: response, description: 'FCM message sent successfully.' });
   } catch (error) {
-    console.error('Error sending message:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to send FCM message.',
-      details: error.message,
-    });
+    console.error('❌ Error sending message:', error);
+    res.status(500).json({ success: false, error: 'Failed to send FCM message.', details: error.message });
   }
 });
 
-app.get('/', (req, res) => {
-  res.send('Push notification server is running.');
-});
-
 app.listen(PORT, () => {
-  console.log(`🚀 Express server listening on http://localhost:${PORT}`);
+  console.log(`🚀 Express server listening on port ${PORT}`);
 });
