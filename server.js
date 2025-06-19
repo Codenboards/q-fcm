@@ -1,7 +1,13 @@
 const express = require('express');
 const admin = require('firebase-admin');
+const fs = require('fs');
 
-const serviceAccount = require('./serviceAccountKey.json');
+// Write the service account JSON from an env var to a temporary file
+const serviceAccountPath = './firebase-credentials.json';
+fs.writeFileSync(serviceAccountPath, process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+
+// Initialize Firebase Admin with the temp credentials file
+const serviceAccount = require(serviceAccountPath);
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
@@ -30,7 +36,6 @@ app.get('/:targetDeviceToken', async (req, res) => {
   };
 
   try {
-    // Send the message using Firebase Admin SDK
     const response = await admin.messaging().send(message);
     console.log('Successfully sent message:', response);
     res.status(200).json({ success: true, messageId: response, description: 'FCM message sent successfully.' });
@@ -40,7 +45,6 @@ app.get('/:targetDeviceToken', async (req, res) => {
   }
 });
 
-// Start  Express Server
 app.listen(PORT, () => {
   console.log(`Express server listening on port ${PORT}`);
 });
