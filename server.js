@@ -4,20 +4,19 @@ const admin = require('firebase-admin');
 let serviceAccount;
 
 try {
-  // First, parse the stringified JSON string
   const envVar = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
-  const parsedEnvString = JSON.parse(envVar); // unescape everything
-  serviceAccount = parsedEnvString;
+
+  // Double parse: some systems wrap JSON strings in quotes
+  const firstParse = JSON.parse(envVar); // this removes outer quotes and backslashes if present
+
+  // If firstParse is already an object, keep it. Otherwise, parse again.
+  serviceAccount = typeof firstParse === 'string' ? JSON.parse(firstParse) : firstParse;
 
   console.log("✅ Firebase service account parsed successfully.");
 } catch (error) {
-  console.error('❌ Error parsing FIREBASE_SERVICE_ACCOUNT_JSON:', error);
+  console.error('❌ Error parsing FIREBASE_SERVICE_ACCOUNT_JSON:', error.message);
   process.exit(1);
 }
-
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-});
 
 const app = express();
 const PORT = 4000;
