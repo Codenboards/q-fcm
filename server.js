@@ -2,6 +2,9 @@ const express = require('express');
 const admin = require('firebase-admin');
 
 let serviceAccount;
+
+console.log("Raw env:", process.env.FIREBASE_SERVICE_ACCOUNT_JSON.slice(0, 100));
+
 try {
   serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
 } catch (error) {
