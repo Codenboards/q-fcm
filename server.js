@@ -31,15 +31,13 @@ app.get('/:targetDeviceToken', async (req, res) => {
   }
 
   const message = {
-    notification: {
-      title: 'New order',
-      body: 'New order received, please check your dashboard!',
+    data: {
+      "title": "New Order!",
+      "body": "Check your dashboard now!",
+      "icon": "/qellner_logo_icon.png",
+      "url": "https://qellner.com"
     },
-    //data: {
-    //  source: 'Qellner',
-    //  timestamp: new Date().toISOString(),
-    //},
-    token: targetDeviceToken,
+    token: targetDeviceToken
   };
 
   try {
