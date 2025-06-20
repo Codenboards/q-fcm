@@ -35,10 +35,10 @@ app.get('/:targetDeviceToken', async (req, res) => {
       title: 'New order',
       body: 'New order received, please check your dashboard!',
     },
-    data: {
-      source: 'Qellner',
-      timestamp: new Date().toISOString(),
-    },
+    //data: {
+    //  source: 'Qellner',
+    //  timestamp: new Date().toISOString(),
+    //},
     token: targetDeviceToken,
   };
 
